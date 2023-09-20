@@ -1,0 +1,11 @@
+{"version": 5,
+ "packagesDir": "lake-packages",
+ "packages":
+ [{"git":
+   {"url": "https://github.com/KislyjKisel/lean-pod",
+    "subDir?": null,
+    "rev": "33afb26d93dc5329f5b624a9bf1cb7681cc4d2e7",
+    "opts": {},
+    "name": "pod",
+    "inputRev?": "main",
+    "inherited": false}}]}

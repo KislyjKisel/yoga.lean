@@ -4,6 +4,16 @@ open Lake DSL
 def packagesDir := defaultPackagesDir
 def yogaVersion := "v2.0.0"
 
+def podConfig : NameMap String := Id.run $ do
+  let mut cfg := NameMap.empty
+  if let some cc := get_config? cc then
+    cfg := cfg.insert `cc cc
+  if let some alloc := get_config? alloc then
+    cfg := cfg.insert `alloc alloc
+  cfg
+
+require pod from git "https://github.com/KislyjKisel/lean-pod" @ "main" with podConfig
+
 package «yoga» {
   srcDir := "src/lean"
   packagesDir := packagesDir
@@ -60,6 +70,14 @@ def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
 
 def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) := do
   let mut flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+
+  match pkg.deps.find? λ dep ↦ dep.name == `pod with
+  | none => error "Missing dependency 'Pod'"
+  | some pod =>
+    flags := flags ++ #[
+      "-I",
+      (pod.dir / "src" / "native" / "include").toString
+    ]
 
   if !(← (__dir__ / "yoga" / "yoga" / "build" / nameToStaticLib "yogacore").pathExists) then
     buildYogaSubmodule true
