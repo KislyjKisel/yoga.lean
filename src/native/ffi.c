@@ -2,8 +2,6 @@
 #include <lean_pod.h>
 #include <yoga/Yoga.h>
 
-static_assert (sizeof(size_t) == sizeof(uintptr_t));
-
 /// @param sz must be divisible by `LEAN_OBJECT_SIZE_DELTA`
 static inline void* lean_yoga_alloc(size_t sz) {
 #ifdef LEAN_YOGA_ALLOC_NATIVE
@@ -58,9 +56,9 @@ static void lean_yoga_Config_foreach(void* cfg, b_lean_obj_arg f) {
 }
 
 static void lean_yoga_Node_finalizer(void* node) {
-    lean_yoga_Config_decRc(YGNodeGetConfig((YGNodeRef)node));
     lean_yoga_Node_context* ctx = YGNodeGetContext((YGNodeRef)node);
     lean_dec(ctx->value);
+    lean_dec_ref(ctx->config);
     size_t childCount = YGNodeGetChildCount((YGNodeRef)node);
     for (size_t i = 0; i < childCount; ++i) {
         lean_dec_ref(ctx->children[i]);
@@ -133,15 +131,15 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_new(lean_obj_arg ctxVal, lean_obj_arg cf
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Config_getContext(b_lean_obj_arg cfg, lean_obj_arg world) {
-    lean_object* val = ((lean_yoga_Config_context*)YGConfigGetContext(cfg))->value;
-    lean_inc(val);
-    return lean_io_result_mk_ok(val);
+    lean_yoga_Config_context* ctx = YGConfigGetContext(lean_yoga_Config_unbox(cfg));
+    lean_inc(ctx->value);
+    return lean_io_result_mk_ok(ctx->value);
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Config_setContext(b_lean_obj_arg cfg, lean_obj_arg ctxVal, lean_obj_arg world) {
-    lean_object** val = &((lean_yoga_Config_context*)YGConfigGetContext(cfg))->value;
-    lean_dec(*val);
-    *val = ctxVal;
+    lean_yoga_Config_context* ctx = YGConfigGetContext(lean_yoga_Config_unbox(cfg));
+    lean_dec(ctx->value);
+    ctx->value = ctxVal;
     return lean_io_result_mk_ok(lean_box(0));
 }
 
@@ -236,7 +234,7 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_swapChild(
         return lean_io_result_mk_ok(lean_box(0));
     }
     lean_object* otherChild = nodeCtx->children[index];
-    ((lean_yoga_Node_context*)YGNodeGetContext(otherChild))->parent = NULL;
+    ((lean_yoga_Node_context*)YGNodeGetContext(lean_yoga_Node_unbox(otherChild)))->parent = NULL;
     lean_dec_ref(otherChild);
     YGNodeSwapChild(ygNode, ygChild, index);
     return lean_io_result_mk_ok(lean_box(0));
@@ -422,28 +420,28 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_copyStyle(b_lean_obj_arg dst, b_lean_obj
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Node_getContext(b_lean_obj_arg node, lean_obj_arg world) {
-    lean_object* value = ((lean_yoga_Node_context*)YGNodeGetContext(lean_yoga_Node_unbox(node)))->value;
-    lean_inc(value);
-    return lean_io_result_mk_ok(value);
+    lean_yoga_Node_context* ctx = YGNodeGetContext(lean_yoga_Node_unbox(node));
+    lean_inc(ctx->value);
+    return lean_io_result_mk_ok(ctx->value);
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Node_setContext(b_lean_obj_arg node, lean_obj_arg ctxVal, lean_obj_arg world) {
-    lean_object** val = &((lean_yoga_Node_context*)YGNodeGetContext(node))->value;
-    lean_dec(*val);
-    *val = ctxVal;
+    lean_yoga_Node_context* ctx = YGNodeGetContext(lean_yoga_Node_unbox(node));
+    lean_dec(ctx->value);
+    ctx->value = ctxVal;
     return lean_io_result_mk_ok(lean_box(0));
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Node_getConfig(b_lean_obj_arg node, lean_obj_arg world) {
-    lean_object* cfg = ((lean_yoga_Node_context*)YGNodeGetContext(lean_yoga_Node_unbox(node)))->config;
-    lean_inc_ref(cfg);
-    return lean_io_result_mk_ok(cfg);
+    lean_yoga_Node_context* ctx = YGNodeGetContext(lean_yoga_Node_unbox(node));
+    lean_inc_ref(ctx->config);
+    return lean_io_result_mk_ok(ctx->config);
 }
 
 LEAN_EXPORT lean_obj_res lean_yoga_Node_setConfig(b_lean_obj_arg node, lean_obj_arg cfg, lean_obj_arg world) {
-    lean_object** ctxCfg = &((lean_yoga_Node_context*)YGNodeGetContext(node))->config;
-    lean_dec_ref(*ctxCfg);
-    *ctxCfg = cfg;
+    lean_yoga_Node_context* ctx = YGNodeGetContext(lean_yoga_Node_unbox(node));
+    lean_dec_ref(ctx->config);
+    ctx->config = cfg;
     YGNodeSetConfig(lean_yoga_Node_unbox(node), lean_yoga_Config_unbox(cfg));
     return lean_io_result_mk_ok(lean_box(0));
 }
@@ -704,7 +702,7 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_styleSetFlexBasisAuto(
     return lean_io_result_mk_ok(lean_box(0));
 }
 
-LEAN_EXPORT lean_obj_res lean_yoga_Node_styleGetMargin(b_lean_obj_arg node, lean_obj_arg world) {
+LEAN_EXPORT lean_obj_res lean_yoga_Node_styleGetFlexBasis(b_lean_obj_arg node, lean_obj_arg world) {
     return lean_io_result_mk_ok(lean_yoga_Value_box(
         YGNodeStyleGetFlexBasis(lean_yoga_Node_unbox(node))
     ));
