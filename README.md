@@ -7,3 +7,4 @@ Not usable for now: work in progress.
 
 * All nodes and configs must be freed manually, use-after-free and double-free will cause IO errors
 * Uses a submodule to build Yoga, can be run manually using `lake run buildYoga`
+* Use option `skipTests` when using as a dependency.

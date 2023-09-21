@@ -94,6 +94,9 @@ def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) :
   if (get_config? cc).isNone then
     flags := flags ++ #["-I", ((← getLeanIncludeDir) / "clang").toString]
 
+  if (get_config? skipTests).isSome then
+    flags := flags.push "-DLEAN_YOGA_SKIP_TESTS"
+
   pure flags
 
 extern_lib «yoga-lean» pkg := do
