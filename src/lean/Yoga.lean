@@ -232,7 +232,7 @@ opaque Node.canUseCachedMeasurement
   (lastWidthMode : MeasureMode) (lastWidth : Float32)
   (lastHeightMode : MeasureMode) (lastHeight : Float32)
   (lastComputedWidth lastComputedHeight marginRow marginColumn : Float32)
-  (config : @& Config) :
+  (config : @& Config α β) :
     IO Bool
 
 @[extern "lean_yoga_Node_copyStyle"]
@@ -259,17 +259,32 @@ opaque Node.hasMeasureFunc (node : @& Node α β) : IO Bool
 @[extern "lean_yoga_Node_setMeasureFunc"]
 opaque Node.setMeasureFunc (node : @& Node α β) (measureFunc : MeasureFunc α β) : IO _root_.Unit
 
-@[extern "lean_yoga_Node_"]
-opaque Node. (node : @& Node α β) : IO 
+@[extern "lean_yoga_Node_hasBaselineFunc"]
+opaque Node.hasBaselineFunc (node : @& Node α β) : IO Bool
+
+@[extern "lean_yoga_Node_setBaselineFunc"]
+opaque Node.setBaselineFunc (node : @& Node α β) (baselineFunc : BaselineFunc α β) : IO _root_.Unit
+
+@[extern "lean_yoga_Node_getDirtiedFunc"]
+opaque Node.getDirtiedFunc (node : @& Node α β) : IO (DirtiedFunc α β)
+
+@[extern "lean_yoga_Node_setDirtiedFunc"]
+opaque Node.setDirtiedFunc (node : @& Node α β) (dirtiedFunc : DirtiedFunc α β) : IO _root_.Unit
+
+@[extern "lean_yoga_Node_getHasNewLayout"]
+opaque Node.getHasNewLayout (node : @& Node α β) : IO Bool
+
+@[extern "lean_yoga_Node_setHasNewLayout"]
+opaque Node.setHasNewLayout (node : @& Node α β) (hasNewLayout : Bool) : IO _root_.Unit
+
+@[extern "lean_yoga_Node_getNodeType"]
+opaque Node.getNodeType (node : @& Node α β) : IO NodeType
+
+@[extern "lean_yoga_Node_setNodeType"]
+opaque Node.setNodeType (node : @& Node α β) (nodeType : NodeType) : IO _root_.Unit
 
 @[extern "lean_yoga_Node_"]
-opaque Node. : IO 
-
-@[extern "lean_yoga_Node_"]
-opaque Node. : IO 
-
-@[extern "lean_yoga_Node_"]
-opaque Node. : IO 
+opaque Node.isDirty (node : @& Node α β) : IO Bool
 
 @[extern "lean_yoga_Node_styleSetDirection"]
 opaque Node.styleSetDirection (node : @& Node α β) (direction : Direction) : IO _root_.Unit
