@@ -5,6 +5,6 @@ Not usable for now: work in progress.
 
 ## Notes
 
-* All nodes and configs must be freed manually, use-after-free and double-free will cause IO errors
+* Can cause data races if used from multiple threads (even without mutation)
 * Uses a submodule to build Yoga, can be run manually using `lake run buildYoga`
 * Use option `skipTests` when using as a dependency.
