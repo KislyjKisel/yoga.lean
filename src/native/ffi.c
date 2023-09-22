@@ -387,10 +387,10 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_markDirtyAndPropagateToDescendants(b_lea
     return lean_io_result_mk_ok(lean_box(0));
 }
 
-LEAN_EXPORT lean_obj_res lean_yoga_Node_print(b_lean_obj_arg node, uint32_t opts, lean_obj_arg world) {
-    YGNodePrint(lean_yoga_Node_unbox(node), (int32_t)opts);
-    return lean_io_result_mk_ok(lean_box(0));
-}
+// LEAN_EXPORT lean_obj_res lean_yoga_Node_print(b_lean_obj_arg node, uint32_t opts, lean_obj_arg world) {
+//     YGNodePrint(lean_yoga_Node_unbox(node), (int32_t)opts);
+//     return lean_io_result_mk_ok(lean_box(0));
+// }
 
 LEAN_EXPORT uint8_t lean_yoga_floatIsUndefined(uint32_t value) {
     return YGFloatIsUndefined(lean_pod_Float32_fromBits(value));

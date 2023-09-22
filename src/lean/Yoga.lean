@@ -259,8 +259,8 @@ Intended to be used for Yoga benchmarks. Don't use in production, as calling
 @[extern "lean_yoga_Node_markDirtyAndPropagateToDescendants"]
 opaque Node.markDirtyAndPropagateToDescendants (node : @& Node α β) : BaseIO Unit
 
-@[extern "lean_yoga_Node_print"]
-opaque Node.print (node : @& Node α β) (options : PrintOptions) : BaseIO Unit
+-- @[extern "lean_yoga_Node_print"]
+-- opaque Node.print (node : @& Node α β) (options : PrintOptions) : BaseIO Unit
 
 @[extern "lean_yoga_floatIsUndefined"]
 opaque floatIsUndefined (value : Float32) : Bool
