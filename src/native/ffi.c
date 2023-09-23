@@ -784,7 +784,7 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_styleGetPadding(
 LEAN_EXPORT lean_obj_res lean_yoga_Node_styleSetBorder(
     b_lean_obj_arg node, uint8_t edge, uint32_t border, lean_obj_arg world
 ) {
-    YGNodeStyleSetGap(lean_yoga_Node_unbox(node), edge, lean_pod_Float32_fromBits(border));
+    YGNodeStyleSetBorder(lean_yoga_Node_unbox(node), edge, lean_pod_Float32_fromBits(border));
     return lean_io_result_mk_ok(lean_box(0));
 }
 
@@ -1069,8 +1069,8 @@ LEAN_EXPORT lean_obj_res lean_yoga_Config_new(lean_obj_arg ctxVal, lean_obj_arg 
 LEAN_EXPORT lean_obj_res lean_yoga_Config_copy(b_lean_obj_arg dst, b_lean_obj_arg src, lean_obj_arg world) {
     YGConfigRef dstCfg = lean_yoga_Config_unbox(dst);
     YGConfigRef srcCfg = lean_yoga_Config_unbox(src);
-    lean_yoga_Node_context* dstCtx = YGConfigGetContext(dstCfg);
-    lean_yoga_Node_context* srcCtx = YGConfigGetContext(srcCfg);
+    lean_yoga_Config_context* dstCtx = YGConfigGetContext(dstCfg);
+    lean_yoga_Config_context* srcCtx = YGConfigGetContext(srcCfg);
     YGConfigCopy(dstCfg, srcCfg);
     YGConfigSetContext(dstCfg, dstCtx);
     lean_dec(dstCtx->value);
