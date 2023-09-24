@@ -6,8 +6,8 @@ def yogaVersion := "v2.0.0" -- todo: auto checkout ?
 
 -- todo: configurable
 def cppStdlib := "c++"
-def cppCompiler := "clang++"
-def cCompiler := "clang"
+def cppCompiler := "/usr/bin/clang++"
+def cCompiler := "/usr/bin/clang"
 
 def podConfig : NameMap String := Id.run $ do
   let mut cfg := NameMap.empty
@@ -34,12 +34,6 @@ lean_lib Yoga
 
 @[default_target]
 lean_exe Test
-
-def buildBindingsO (pkg : Package) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
-  let oFile := pkg.irDir / "native" / (stem ++ ".o")
-  let fileName := stem ++ ".c"
-  let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
-  buildO fileName oFile srcJob flags ((get_config? cc).getD "clang")
 
 def tryRunProcess {m} [Monad m] [MonadError m] [MonadLiftT IO m] (sa : IO.Process.SpawnArgs) : m String := do
   let output ← IO.Process.output sa
@@ -88,7 +82,10 @@ def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
   if printCmdOutput then IO.println cmakeBuildOutput
 
 def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) := do
-  let mut flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+  let mut flags := #[
+    "-I", (← getLeanIncludeDir).toString,
+    "-fPIC"
+  ]
 
   match pkg.deps.find? λ dep ↦ dep.name == `pod with
   | none => error "Missing dependency 'Pod'"
@@ -115,11 +112,17 @@ def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) :
 
   pure flags
 
+def buildC (pkg : Package) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
+  let oFile := pkg.irDir / "native" / (stem ++ ".o")
+  let fileName := stem ++ ".c"
+  let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
+  buildO ("native/" ++ fileName) oFile srcJob flags cCompiler
+
 extern_lib «yoga-lean» pkg := do
   let name := nameToStaticLib "yoga-lean"
   let flags ← bindingsCFlags pkg
-  let bindingsOFile ← buildBindingsO pkg flags "ffi"
-  buildStaticLib (pkg.nativeLibDir / name) #[bindingsOFile]
+  let ffiO ← buildC pkg flags "ffi"
+  buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
 script yogaBuild do
   buildYogaSubmodule true
