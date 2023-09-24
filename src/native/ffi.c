@@ -189,33 +189,20 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_insertChild(
     }
     size_t childCount = YGNodeGetChildCount(ygNode);
     if (index >= childCount) {
-        if (nodeCtx->children == NULL) {
-            nodeCtx->children = malloc(1 * sizeof(lean_object*));
-            nodeCtx->childrenCapacity = 1;
-        }
-        else if (nodeCtx->childrenCapacity < childCount + 1) {
-            nodeCtx->childrenCapacity = 2 * childCount + 1;
-            lean_object** children = malloc(nodeCtx->childrenCapacity * sizeof(lean_object*));
-            memcpy(children, nodeCtx->children, childCount);
-            free(nodeCtx->children);
-            nodeCtx->children = children;
-        }
-        nodeCtx->children[childCount] = child;
+        index = childCount;
+    }
+    if (nodeCtx->childrenCapacity < childCount + 1) {
+        nodeCtx->childrenCapacity = 2 * childCount + 1;
+        lean_object** children = malloc(nodeCtx->childrenCapacity * sizeof(lean_object*));
+        memcpy(children, nodeCtx->children, index);
+        children[index] = child;
+        memcpy(children + index + 1, nodeCtx->children + index, childCount - index);
+        free(nodeCtx->children);
+        nodeCtx->children = children;
     }
     else {
-        if (nodeCtx->childrenCapacity < childCount + 1) {
-            nodeCtx->childrenCapacity = 2 * childCount + 1;
-            lean_object** children = malloc(nodeCtx->childrenCapacity * sizeof(lean_object*));
-            memcpy(children, nodeCtx->children, index);
-            children[index] = child;
-            memcpy(children + index + 1, nodeCtx->children + index, childCount - index);
-            free(nodeCtx->children);
-            nodeCtx->children = children;
-        }
-        else {
-            memmove(nodeCtx->children + index + 1, nodeCtx->children + index, childCount - index);
-            nodeCtx->children[index] = child;
-        }
+        memmove(nodeCtx->children + index + 1, nodeCtx->children + index, childCount - index);
+        nodeCtx->children[index] = child;
     }
     YGNodeInsertChild(ygNode, ygChild, index);
     childCtx->parent = node;
