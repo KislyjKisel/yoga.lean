@@ -2,7 +2,12 @@ import Lake
 open Lake DSL
 
 def packagesDir := defaultPackagesDir
-def yogaVersion := "v2.0.0"
+def yogaVersion := "v2.0.0" -- todo: auto checkout ?
+
+-- todo: configurable
+def cppStdlib := "c++"
+def cppCompiler := "clang++"
+def cCompiler := "clang"
 
 def podConfig : NameMap String := Id.run $ do
   let mut cfg := NameMap.empty
@@ -12,6 +17,7 @@ def podConfig : NameMap String := Id.run $ do
     cfg := cfg.insert `alloc alloc
   cfg
 
+-- Required for Float32, can be made standalone using a `def Float32 := UInt32`
 require pod from git "https://github.com/KislyjKisel/lean-pod" @ "main" with podConfig
 
 package «yoga» {
@@ -19,7 +25,9 @@ package «yoga» {
   packagesDir := packagesDir
   moreLeanArgs := #["-DautoImplicit=false"]
   moreServerArgs := #["-DautoImplicit=false"]
-  moreLinkArgs := #[s!"-L{__dir__}/yoga/yoga/build", "-lyogacore"]
+  moreLinkArgs := #[
+    s!"-L{__dir__}/yoga/yoga/build", "-lyogacore", s!"-l{cppStdlib}"
+  ]
 }
 
 lean_lib Yoga
@@ -29,8 +37,9 @@ lean_exe Test
 
 def buildBindingsO (pkg : Package) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
   let oFile := pkg.irDir / "native" / (stem ++ ".o")
-  let srcJob ← inputFile <| pkg.dir / "src" / "native" / (stem ++ ".c")
-  buildO (stem ++ ".c") oFile srcJob flags ((get_config? cc).getD (← getLeanCc).toString)
+  let fileName := stem ++ ".c"
+  let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
+  buildO fileName oFile srcJob flags ((get_config? cc).getD "clang")
 
 def tryRunProcess {m} [Monad m] [MonadError m] [MonadLiftT IO m] (sa : IO.Process.SpawnArgs) : m String := do
   let output ← IO.Process.output sa
@@ -40,6 +49,8 @@ def tryRunProcess {m} [Monad m] [MonadError m] [MonadLiftT IO m] (sa : IO.Proces
     return output.stdout
 
 def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
+  let cd ← IO.currentDir
+
   let gitOutput ← tryRunProcess {
     cmd := "git"
     args := #["submodule", "update", "--init", "--force", "--recursive"]
@@ -56,8 +67,16 @@ def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
 
   let cmakeOutput ← tryRunProcess {
     cmd := "cmake"
-    args := #["-DCMAKE_BUILD_TYPE=Release", ".."]
+    args := #[
+      "-DCMAKE_BUILD_TYPE=Release",
+      -- "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+      s!"-DCMAKE_C_COMPILER={cCompiler}",
+      s!"-DCMAKE_CXX_COMPILER={cppCompiler}",
+      s!"-DCMAKE_CXX_FLAGS=-stdlib=lib{cppStdlib}",
+      (cd / "yoga" / "yoga").toString
+    ]
     cwd := __dir__ / "yoga" / "yoga" / "build"
+    env := #[("LD_LIBRARY_PATH", none)]
   }
   if printCmdOutput then IO.println cmakeOutput
 
@@ -91,9 +110,6 @@ def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) :
   | .some "native" => flags := flags.push "-DLEAN_YOGA_ALLOC_NATIVE"
   | .some _ => error "Unknown `alloc` option value"
 
-  if (get_config? cc).isNone then
-    flags := flags ++ #["-I", ((← getLeanIncludeDir) / "clang").toString]
-
   if (get_config? skipTests).isSome then
     flags := flags.push "-DLEAN_YOGA_SKIP_TESTS"
 
@@ -105,6 +121,22 @@ extern_lib «yoga-lean» pkg := do
   let bindingsOFile ← buildBindingsO pkg flags "ffi"
   buildStaticLib (pkg.nativeLibDir / name) #[bindingsOFile]
 
-script buildYoga do
+script yogaBuild do
   buildYogaSubmodule true
+  return 0
+
+script yogaClean do
+  if System.Platform.isWindows
+    then
+      let o1 ← tryRunProcess {
+        cmd := "rmdir"
+        args := #["/s", "/q", "yoga\\yoga\\build"]
+      }
+      IO.println o1
+    else
+      let o1 ← tryRunProcess {
+        cmd := "rm"
+        args := #["-rf", "yoga/yoga/build"]
+      }
+      IO.println o1
   return 0
