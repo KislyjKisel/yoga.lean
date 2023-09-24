@@ -81,6 +81,10 @@ LEAN_EXPORT lean_obj_res lean_yoga_initialize(lean_obj_arg world) {
     return lean_io_result_mk_ok(lean_box(0));
 }
 
+LEAN_EXPORT uint32_t lean_yoga_undefined(lean_obj_arg unit) {
+    return lean_pod_Float32_toBits(YGUndefined);
+}
+
 static inline lean_object* lean_yoga_Node_box(YGNodeRef ref, lean_yoga_Node_context ctx) {
     lean_yoga_Node_context* ctxBoxed = lean_yoga_alloc(sizeof(lean_yoga_Node_context));
     *ctxBoxed = ctx;

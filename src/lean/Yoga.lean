@@ -7,10 +7,15 @@ namespace Yoga
 
 variable {α β : Type}
 
-@[extern "lean_yoga_initialize"]
-private opaque «initialize» : BaseIO Unit
+@[extern "lean_yoga_initialize"] private
+opaque «initialize» : BaseIO Unit
 
 builtin_initialize «initialize»
+
+@[extern "lean_yoga_undefined"] private
+opaque undefined' : Unit → Float32
+
+def undefined : Float32 := undefined' ()
 
 inductive Align where
 | auto
