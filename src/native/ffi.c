@@ -121,8 +121,8 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_new(lean_obj_arg ctxVal, lean_obj_arg cf
     };
     lean_yoga_Node_context ctx = {
         .value = ctxVal,
-        .config = lean_yoga_Config_box(cfg, cfgCtx),
         .parent = NULL,
+        .config = lean_yoga_Config_box(cfg, cfgCtx),
         .children = NULL,
         .childrenCapacity = 0
     };
@@ -148,8 +148,8 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_newWithConfig(lean_obj_arg ctxVal, lean_
     YGNodeRef node = YGNodeNewWithConfig(ygCfg);
     lean_yoga_Node_context ctx = {
         .value = ctxVal,
-        .config = cfg,
         .parent = NULL,
+        .config = cfg,
         .children = NULL,
         .childrenCapacity = 0
     };
