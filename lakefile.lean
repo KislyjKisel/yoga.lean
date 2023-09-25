@@ -3,11 +3,9 @@ open Lake DSL
 
 def packagesDir := defaultPackagesDir
 def yogaVersion := "v2.0.0" -- todo: auto checkout ?
-
--- todo: configurable
-def cppStdlib := "c++"
-def cppCompiler := "/usr/bin/clang++"
-def cCompiler := "/usr/bin/clang"
+def cppStdlib := (get_config? cppStdlib).getD "c++"
+def cppCompiler := (get_config? cppCompiler).getD "clang++"
+def cCompiler := (get_config? cppCompiler).getD "clang"
 
 def podConfig : NameMap String := Id.run $ do
   let mut cfg := NameMap.empty
@@ -112,16 +110,25 @@ def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) :
 
   pure flags
 
-def buildC (pkg : Package) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
+def buildC (pkg : Package) (compiler : FilePath) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
   let oFile := pkg.irDir / "native" / (stem ++ ".o")
   let fileName := stem ++ ".c"
   let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
-  buildO ("native/" ++ fileName) oFile srcJob flags cCompiler
+  buildO ("native/" ++ fileName) oFile srcJob flags compiler
 
 extern_lib «yoga-lean» pkg := do
   let name := nameToStaticLib "yoga-lean"
   let flags ← bindingsCFlags pkg
-  let ffiO ← buildC pkg flags "ffi"
+  let cCompiler ←
+    if cCompiler == "clang"
+      then
+        IO.eprintln $
+          "Warning: `cCompiler=clang` may use Lean's bundled clang which won't work;" ++
+          "falling back to `cc` to compile ffi."
+        pure "cc"
+      else
+        pure cCompiler
+  let ffiO ← buildC pkg cCompiler flags "ffi"
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
 script yogaBuild do
