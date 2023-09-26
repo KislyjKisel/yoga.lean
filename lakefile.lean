@@ -92,7 +92,7 @@ def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) :
     ]
 
   if !(← (__dir__ / "yoga" / "yoga" / "build" / nameToStaticLib "yogacore").pathExists) then
-    buildYogaSubmodule true
+    buildYogaSubmodule false
   flags := flags.append #[
     "-I",
     (pkg.dir / "yoga").toString
