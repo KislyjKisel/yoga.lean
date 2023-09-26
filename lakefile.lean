@@ -5,7 +5,7 @@ def packagesDir := defaultPackagesDir
 def yogaVersion := "v2.0.0" -- todo: auto checkout ?
 def cppStdlib := (get_config? cppStdlib).getD "c++"
 def cppCompiler := (get_config? cppCompiler).getD "clang++"
-def cCompiler := (get_config? cppCompiler).getD "clang"
+def cCompiler := (get_config? cCompiler).getD "clang"
 
 def podConfig : NameMap String := Id.run $ do
   let mut cfg := NameMap.empty
@@ -41,8 +41,6 @@ def tryRunProcess {m} [Monad m] [MonadError m] [MonadLiftT IO m] (sa : IO.Proces
     return output.stdout
 
 def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
-  let cd ← IO.currentDir
-
   let gitOutput ← tryRunProcess {
     cmd := "git"
     args := #["submodule", "update", "--init", "--force", "--recursive"]
@@ -65,7 +63,7 @@ def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
       s!"-DCMAKE_C_COMPILER={cCompiler}",
       s!"-DCMAKE_CXX_COMPILER={cppCompiler}",
       s!"-DCMAKE_CXX_FLAGS=-stdlib=lib{cppStdlib}",
-      (cd / "yoga" / "yoga").toString
+      ".."
     ]
     cwd := __dir__ / "yoga" / "yoga" / "build"
     env := #[("LD_LIBRARY_PATH", none)]
