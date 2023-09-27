@@ -77,46 +77,27 @@ def buildYogaSubmodule (printCmdOutput : Bool) : IO Unit := do
   }
   if printCmdOutput then IO.println cmakeBuildOutput
 
-def bindingsCFlags (pkg : NPackage _package.name) : IndexBuildM (Array String) := do
-  let mut flags := #[
-    "-I", (← getLeanIncludeDir).toString,
-    "-fPIC"
-  ]
+extern_lib «yoga-lean» pkg := do
+  let name := nameToStaticLib "yoga-lean"
 
+  let mut weakArgs := #["-I", (← getLeanIncludeDir).toString, "-I", (pkg.dir / "yoga").toString]
+  let mut traceArgs := #["-fPIC"]
   match pkg.deps.find? λ dep ↦ dep.name == `pod with
   | none => error "Missing dependency 'Pod'"
   | some pod =>
-    flags := flags ++ #[
+    weakArgs := weakArgs ++ #[
       "-I",
       (pod.dir / "src" / "native" / "include").toString
     ]
-
   if !(← (__dir__ / "yoga" / "yoga" / "build" / nameToStaticLib "yogacore").pathExists) then
     buildYogaSubmodule false
-  flags := flags.append #[
-    "-I",
-    (pkg.dir / "yoga").toString
-  ]
-
   match get_config? alloc with
   | .none | .some "lean" => pure ()
-  | .some "native" => flags := flags.push "-DLEAN_YOGA_ALLOC_NATIVE"
+  | .some "native" => traceArgs := traceArgs.push "-DLEAN_YOGA_ALLOC_NATIVE"
   | .some _ => error "Unknown `alloc` option value"
-
   if (get_config? skipTests).isSome then
-    flags := flags.push "-DLEAN_YOGA_SKIP_TESTS"
+    traceArgs := traceArgs.push "-DLEAN_YOGA_SKIP_TESTS"
 
-  pure flags
-
-def buildC (pkg : Package) (compiler : FilePath) (flags : Array String) (stem : String) : IndexBuildM (BuildJob FilePath) := do
-  let oFile := pkg.irDir / "native" / (stem ++ ".o")
-  let fileName := stem ++ ".c"
-  let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
-  buildO ("native/" ++ fileName) oFile srcJob flags compiler
-
-extern_lib «yoga-lean» pkg := do
-  let name := nameToStaticLib "yoga-lean"
-  let flags ← bindingsCFlags pkg
   let cCompiler ←
     if cCompiler == "clang"
       then
@@ -126,7 +107,11 @@ extern_lib «yoga-lean» pkg := do
         pure "cc"
       else
         pure cCompiler
-  let ffiO ← buildC pkg cCompiler flags "ffi"
+
+  let oFile := pkg.irDir / "native" / "ffi.o"
+  let fileName := "ffi.c"
+  let srcJob ← inputFile <| pkg.dir / "src" / "native" / fileName
+  let ffiO ← buildO ("native/" ++ fileName) oFile srcJob weakArgs traceArgs cCompiler
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
 script yogaBuild do
