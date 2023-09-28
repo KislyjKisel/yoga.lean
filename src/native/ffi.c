@@ -22,11 +22,13 @@ static inline void lean_yoga_free(void* p) {
 
 // TODO: children as a flexible array
 typedef struct {
+    lean_object* self;
     lean_object* value;
     lean_object* parent;
     lean_object* config;
     lean_object** children;
     size_t childrenCapacity;
+    lean_object* measureFunc;
 } lean_yoga_Node_context;
 
 typedef struct {
@@ -86,10 +88,12 @@ LEAN_EXPORT uint32_t lean_yoga_undefined(lean_obj_arg unit) {
 }
 
 static inline lean_object* lean_yoga_Node_box(YGNodeRef ref, lean_yoga_Node_context ctx) {
+    lean_object* obj = lean_alloc_external(lean_yoga_Node_class, ref);
+    ctx.self = obj;
     lean_yoga_Node_context* ctxBoxed = lean_yoga_alloc(sizeof(lean_yoga_Node_context));
     *ctxBoxed = ctx;
     YGNodeSetContext(ref, ctxBoxed);
-    return lean_alloc_external(lean_yoga_Node_class, ref);
+    return obj;
 }
 
 static inline YGNodeRef lean_yoga_Node_unbox(lean_object* node) {
@@ -124,11 +128,13 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_new(lean_obj_arg ctxVal, lean_obj_arg cf
         .value = cfgCtxVal,
     };
     lean_yoga_Node_context ctx = {
+        .self = NULL,
         .value = ctxVal,
         .parent = NULL,
         .config = lean_yoga_Config_box(cfg, cfgCtx),
         .children = NULL,
-        .childrenCapacity = 0
+        .childrenCapacity = 0,
+        .measureFunc = NULL
     };
     YGNodeRef node = YGNodeNewWithConfig(cfg);
     return lean_io_result_mk_ok(lean_yoga_Node_box(node, ctx));
@@ -151,11 +157,13 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_newWithConfig(lean_obj_arg ctxVal, lean_
     YGConfigRef ygCfg = lean_yoga_Config_unbox(cfg);
     YGNodeRef node = YGNodeNewWithConfig(ygCfg);
     lean_yoga_Node_context ctx = {
+        .self = NULL,
         .value = ctxVal,
         .parent = NULL,
         .config = cfg,
         .children = NULL,
-        .childrenCapacity = 0
+        .childrenCapacity = 0,
+        .measureFunc = NULL
     };
     return lean_io_result_mk_ok(lean_yoga_Node_box(node, ctx));
 }
@@ -450,8 +458,58 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_hasMeasureFunc(b_lean_obj_arg node, lean
     ));
 }
 
-// @[extern "lean_yoga_Node_setMeasureFunc"]
-// opaque Node.setMeasureFunc (node : @& Node α β) (measureFunc : MeasureFunc α β) : IO Unit
+static YGSize lean_yoga_measureFunc(
+    YGNodeRef node, float width, YGMeasureMode widthMode, float height, YGMeasureMode heightMode
+) {
+    lean_yoga_Node_context* ctx = YGNodeGetContext(node);
+    lean_inc_ref(ctx->measureFunc);
+    lean_inc_ref(ctx->self);
+    lean_object* res = lean_apply_6(
+        ctx->measureFunc,
+        ctx->self,
+        lean_pod_Float32_box(width),
+        lean_box(widthMode),
+        lean_pod_Float32_box(height),
+        lean_box(heightMode),
+        lean_box(0)
+    );
+    if(lean_io_result_is_error(res)) {
+        lean_io_result_show_error(res);
+        lean_dec_ref(res);
+        return (YGSize){ .width = YGUndefined, .height = YGUndefined };
+    }
+    lean_object* val = lean_io_result_get_value(res);
+    YGSize size = {
+        .width = lean_pod_Float32_unbox(lean_ctor_get(val, 0)),
+        .height = lean_pod_Float32_unbox(lean_ctor_get(val, 1))
+    };
+    lean_dec_ref(res);
+    return size;
+}
+
+LEAN_EXPORT lean_obj_arg lean_yoga_Node_setMeasureFunc(b_lean_obj_arg node, lean_obj_arg mf, lean_obj_arg world) {
+    YGNodeRef ygNode = lean_yoga_Node_unbox(node);
+    lean_yoga_Node_context* ctx = YGNodeGetContext(ygNode);
+    if (ctx->measureFunc != NULL) {
+        lean_dec_ref(ctx->measureFunc);
+    }
+    else {
+        YGNodeSetMeasureFunc(ygNode, lean_yoga_measureFunc);
+    }
+    ctx->measureFunc = mf;
+    return lean_io_result_mk_ok(lean_box(0));
+}
+
+LEAN_EXPORT lean_obj_arg lean_yoga_Node_resetMeasureFunc(b_lean_obj_arg node, lean_obj_arg world) {
+    YGNodeRef ygNode = lean_yoga_Node_unbox(node);
+    lean_yoga_Node_context* ctx = YGNodeGetContext(ygNode);
+    if (ctx->measureFunc != NULL) {
+        YGNodeSetMeasureFunc(ygNode, NULL);
+        lean_dec_ref(ctx->measureFunc);
+        ctx->measureFunc = NULL;
+    }
+    return lean_io_result_mk_ok(lean_box(0));
+}
 
 LEAN_EXPORT lean_obj_res lean_yoga_Node_hasBaselineFunc(b_lean_obj_arg node, lean_obj_arg world) {
     return lean_io_result_mk_ok(lean_box(

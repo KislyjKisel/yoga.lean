@@ -306,8 +306,11 @@ opaque Config.setPrintTreeFlag (config : @& Config α β) (enabled : Bool) : Bas
 @[extern "lean_yoga_Node_hasMeasureFunc"]
 opaque Node.hasMeasureFunc (node : @& Node α β) : BaseIO Bool
 
--- @[extern "lean_yoga_Node_setMeasureFunc"]
--- opaque Node.setMeasureFunc (node : @& Node α β) (measureFunc : MeasureFunc α β) : BaseIO Unit
+@[extern "lean_yoga_Node_setMeasureFunc"]
+opaque Node.setMeasureFunc (node : @& Node α β) (measureFunc : MeasureFunc α β) : BaseIO Unit
+
+@[extern "lean_yoga_Node_resetMeasureFunc"]
+opaque Node.resetMeasureFunc (node : @& Node α β) : BaseIO Unit
 
 @[extern "lean_yoga_Node_hasBaselineFunc"]
 opaque Node.hasBaselineFunc (node : @& Node α β) : BaseIO Bool
