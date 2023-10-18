@@ -21,30 +21,30 @@ inductive Align where
 | auto
 | flexStart | center | flexEnd
 | stretch | baseline | spaceBetween | spaceAround
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Dimension where
 | width | height
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Direction where
 | inherit | ltr | rtl
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Display where
 | flex | none
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Edge where
 | left | top | right | bottom
 | start | end
 | horizontal | vertical
 | all
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 structure Errata where
   val : Int32
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 def Errata.none : Errata := .mk $ .mk 0
 def Errata.stretchFlexBasis : Errata := .mk $ .mk 1
@@ -67,44 +67,45 @@ inductive ExperimentalFeature where
 | webFlexBasis
 | absolutePercentageAgainstPaddingEdge
 | fixJniLocalRefOverflows
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive FlexDirection where
 | column | columnReverse
 | row | rowReverse
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Gutter where
 | column | row | all
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Justify where
 | flexStart | center | flexEnd
 | spaceBetween | spaceAround | spaceEvenly
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive LogLevel where
 | error | warn | info | debug | verbose | fatal
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive MeasureMode where
 | undefined | exactly | atMost
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive NodeType where
 | default | text
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Overflow where
 | visible | hidden | scroll
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive PositionType where
 | static | relative | absolute
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 structure PrintOptions where
   val : Int32
+deriving Inhabited, DecidableEq
 
 def PrintOptions.layout : PrintOptions := .mk $ .mk 1
 def PrintOptions.style : PrintOptions := .mk $ .mk 2
@@ -125,11 +126,11 @@ instance : Xor PrintOptions where
 protected
 inductive Unit where
 | undefined | point | percent | auto
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 inductive Wrap where
 | noWrap | wrap | wrapReverse
-deriving Inhabited
+deriving Inhabited, DecidableEq
 
 structure Size where
   width : Float32
