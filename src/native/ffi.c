@@ -206,14 +206,22 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_insertChild(
     if (nodeCtx->childrenCapacity < childCount + 1) {
         nodeCtx->childrenCapacity = 2 * childCount + 1;
         lean_object** children = malloc(nodeCtx->childrenCapacity * sizeof(lean_object*));
-        memcpy(children, nodeCtx->children, index);
+        memcpy(children, nodeCtx->children, index * sizeof(lean_object*));
         children[index] = child;
-        memcpy(children + index + 1, nodeCtx->children + index, childCount - index);
+        memcpy(
+            children + index + 1,
+            nodeCtx->children + index,
+            (childCount - index) * sizeof(lean_object*)
+        );
         free(nodeCtx->children);
         nodeCtx->children = children;
     }
     else {
-        memmove(nodeCtx->children + index + 1, nodeCtx->children + index, childCount - index);
+        memmove(
+            nodeCtx->children + index + 1,
+            nodeCtx->children + index,
+            (childCount - index) * sizeof(lean_object*)
+        );
         nodeCtx->children[index] = child;
     }
     YGNodeInsertChild(ygNode, ygChild, index);
@@ -249,7 +257,11 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_removeChild(b_lean_obj_arg node, b_lean_
         if (nodeCtx->children[i] == child) {
             lean_dec_ref(nodeCtx->children[i]);
             childCtx->parent = NULL;
-            memmove(nodeCtx->children + i, nodeCtx->children + i + 1, childCount - i - 1);
+            memmove(
+                nodeCtx->children + i,
+                nodeCtx->children + i + 1,
+                (childCount - i - 1) * sizeof(lean_object*)
+            );
             YGNodeRemoveChild(ygNode, ygChild);
             break;
         }
