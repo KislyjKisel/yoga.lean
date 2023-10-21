@@ -207,7 +207,7 @@ opaque Node.newWithConfig (ctx : α) (config : Config α β) : BaseIO (Node α �
 -- @[extern "lean_yoga_Node_clone"]
 -- opaque Node.clone (node : @& Node α β) : IO (Node α β)
 
-/-- Crashes when the node has any parent or children. -/
+/-- Errors when the node has any parent or children. -/
 @[extern "lean_yoga_Node_reset"]
 opaque Node.reset (node : @& Node α β) : IO Unit
 

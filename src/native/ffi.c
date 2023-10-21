@@ -177,6 +177,16 @@ LEAN_EXPORT lean_obj_res lean_yoga_Node_newWithConfig(lean_obj_arg ctxVal, lean_
 LEAN_EXPORT lean_obj_res lean_yoga_Node_reset(b_lean_obj_arg node, lean_obj_arg world) {
     YGNodeRef ygNode = lean_yoga_Node_unbox(node);
     lean_yoga_Node_context* ctx = YGNodeGetContext(ygNode);
+    if (YGNodeGetChildCount(ygNode) != 0) {
+        return lean_io_result_mk_error(lean_mk_io_user_error(lean_mk_string(
+            "Cannot reset a node which still has children attached"
+        )));
+    }
+    if (ctx->parent != NULL) {
+        return lean_io_result_mk_error(lean_mk_io_user_error(lean_mk_string(
+            "Cannot reset a node still attached to an owner"
+        )));
+    }
     YGNodeReset(ygNode); // keeps config
     YGNodeSetContext(ygNode, ctx);
     return lean_io_result_mk_ok(lean_box(0));
