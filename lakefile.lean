@@ -114,11 +114,11 @@ extern_lib «yoga-lean» pkg := do
   let ffiO ← buildO ("native/" ++ fileName) oFile srcJob weakArgs traceArgs cCompiler
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
-script yogaBuild do
+script buildSubmodule do
   buildYogaSubmodule true
   return 0
 
-script yogaClean do
+script cleanSubmodule do
   if System.Platform.isWindows
     then
       let o1 ← tryRunProcess {

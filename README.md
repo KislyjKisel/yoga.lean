@@ -1,7 +1,7 @@
 # Yoga.lean
 
 Bindings to the [Yoga](https://github.com/facebook/yoga) layout engine `v2.0.0`.
-Not tested at all, but may be usable.
+Tested only on Linux and not extensively.
 
 ## Configuration
 
@@ -13,5 +13,5 @@ Not tested at all, but may be usable.
 ## Notes
 
 * Can cause data races if used from multiple threads (even without mutation)
-* Uses a submodule to build Yoga, can be run manually using `lake run yogaBuild`.
-  Use `lake run yogaClean` to delete yoga build.
+* Uses a submodule to build Yoga, can be run manually using `lake run buildSubmodule`.
+  Use `lake run cleanSubmodule` to delete yoga build.
